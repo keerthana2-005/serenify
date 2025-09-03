@@ -11,31 +11,48 @@ function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false); // To style messages
 
   // Handle signup
-  const handleSignup = async () => {
+  const handleSignup = async (e) => {
+    e.preventDefault(); // Prevent default form submission
     setMessage('');
+    setIsError(false);
+
     if (!email || !username || !password || !confirmPassword) {
-      setMessage('Please fill all fields.');
+      setMessage('Please fill in all fields.');
+      setIsError(true);
       return;
     }
+    if (password !== confirmPassword) {
+      setMessage('Passwords do not match.');
+      setIsError(true);
+      return;
+    }
+
     try {
-      const res = await fetch('http://localhost:8080/api/signup', {
+      // Fire-and-forget signup request; navigate immediately to OTP page
+      fetch('http://localhost:8080/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, username, password, confirmPassword }),
-      });
+      })
+        .then(async (res) => {
+          const contentType = res.headers.get('content-type') || '';
+          const data = contentType.includes('application/json') ? await res.json() : { message: await res.text() };
+          if (!res.ok) {
+            console.error('Signup error:', data);
+          }
+        })
+        .catch((err) => console.error('Signup request failed:', err));
 
-      const data = await res.json();
-      setMessage(data.message);
-
-      if (res.ok) {
-        // Redirect to verify OTP page after successful signup
-        navigate('/verify-otp', { state: { email } });
-      }
+      navigate('/verify-otp', { state: { email } });
+      return;
     } catch (err) {
       console.error(err);
-      setMessage('Server error. Try again.');
+      // Even on failure, still navigate to OTP page per requirement
+      navigate('/verify-otp', { state: { email } });
+      return;
     }
   };
 
@@ -125,12 +142,13 @@ function SignupPage() {
           </div>
 
           {/* Right Section (Signup Form) */}
-          <div
+          <form
+            onSubmit={handleSignup}
             className="form-section"
             style={{ flex: 1, backgroundColor: 'transparent', padding: '40px', borderRadius: '10px' }}
           >
             {message && (
-              <p style={{ color: 'red', marginBottom: '20px', fontWeight: 'bold' }}>
+              <p style={{ color: isError ? '#D8000C' : '#4F8A10', fontWeight: 'bold', marginBottom: '20px', textAlign: 'center' }}>
                 {message}
               </p>
             )}
@@ -144,15 +162,11 @@ function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="jane.doe@email.com"
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '5px',
-                  border: '1px solid #D1C5B5',
-                  backgroundColor: '#F9F5EF',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  color: '#3A3833'
+                  width: '100%', padding: '12px', borderRadius: '5px',
+                  border: '1px solid #D1C5B5', backgroundColor: '#F9F5EF',
+                  fontSize: '16px', boxSizing: 'border-box', color: '#3A3833'
                 }}
+                required
               />
             </div>
 
@@ -165,15 +179,11 @@ function SignupPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="janedoe"
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '5px',
-                  border: '1px solid #D1C5B5',
-                  backgroundColor: '#F9F5EF',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  color: '#3A3833'
+                  width: '100%', padding: '12px', borderRadius: '5px',
+                  border: '1px solid #D1C5B5', backgroundColor: '#F9F5EF',
+                  fontSize: '16px', boxSizing: 'border-box', color: '#3A3833'
                 }}
+                required
               />
             </div>
 
@@ -185,15 +195,11 @@ function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '5px',
-                  border: '1px solid #D1C5B5',
-                  backgroundColor: '#F9F5EF',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  color: '#3A3833'
+                  width: '100%', padding: '12px', borderRadius: '5px',
+                  border: '1px solid #D1C5B5', backgroundColor: '#F9F5EF',
+                  fontSize: '16px', boxSizing: 'border-box', color: '#3A3833'
                 }}
+                required
               />
             </div>
 
@@ -205,35 +211,25 @@ function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '5px',
-                  border: '1px solid #D1C5B5',
-                  backgroundColor: '#F9F5EF',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  color: '#3A3833'
+                  width: '100%', padding: '12px', borderRadius: '5px',
+                  border: '1px solid #D1C5B5', backgroundColor: '#F9F5EF',
+                  fontSize: '16px', boxSizing: 'border-box', color: '#3A3833'
                 }}
+                required
               />
             </div>
 
             <button
-              onClick={handleSignup}
+              type="submit"
               style={{
-                backgroundColor: '#A27D4C',
-                color: 'white',
-                border: 'none',
-                width: '100%',
-                padding: '15px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '18px',
-                fontWeight: 'bold'
+                backgroundColor: '#A27D4C', color: 'white', border: 'none',
+                width: '100%', padding: '15px', borderRadius: '8px',
+                cursor: 'pointer', fontSize: '18px', fontWeight: 'bold'
               }}
             >
               Continue
             </button>
-          </div>
+          </form>
         </div>
       </main>
     </div>

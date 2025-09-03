@@ -1,10 +1,55 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 // This path assumes 'LoginPage.js' and the 'assets' folder are both inside 'src'
 import hangingLeavesImage from '../assets/leaves.png';
 
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState(''); // email or username
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setIsError(false);
+
+    if (!identifier || !password) {
+      setMessage('Please enter email/username and password.');
+      setIsError(true);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:8080/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password }),
+      });
+
+      const data = await res.json().catch(() => ({ message: 'Unexpected server response' }));
+      if (res.ok) {
+        setIsError(false);
+        // Optionally store user in localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/profile');
+      } else {
+        setIsError(true);
+        setMessage(data.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setIsError(true);
+      setMessage('Unable to reach server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="App" style={{ backgroundColor: '#eeebe5ff', minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif', position: 'relative', overflowX: 'hidden' }}>
       
@@ -60,13 +105,18 @@ function LoginPage() {
           </div>
 
           {/* Right Section (Form) */}
-          <div className="form-section" style={{ flex: 1, backgroundColor: 'transparent', padding: '40px', borderRadius: '10px' }}>
+          <form onSubmit={handleLogin} className="form-section" style={{ flex: 1, backgroundColor: 'transparent', padding: '40px', borderRadius: '10px' }}>
+            {message && (
+              <p style={{ color: isError ? '#D8000C' : '#4F8A10', fontWeight: 'bold', marginBottom: '20px' }}>{message}</p>
+            )}
             <div style={{ marginBottom: '30px' }}>
-              <label htmlFor="email" style={{ display: 'block', fontSize: '18px', color: '#3A3833', marginBottom: '10px' }}>Email</label>
+              <label htmlFor="identifier" style={{ display: 'block', fontSize: '18px', color: '#3A3833', marginBottom: '10px' }}>Email or Username</label>
               <input
-                type="email"
-                id="email"
-                placeholder="jane.doe@email.com"
+                type="text"
+                id="identifier"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="jane.doe@email.com or janedoe"
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -84,6 +134,8 @@ function LoginPage() {
               <input
                 type="password"
                 id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -96,10 +148,10 @@ function LoginPage() {
                 }}
               />
             </div>
-            <button style={{ backgroundColor: '#4C7A78', color: 'white', border: 'none', padding: '15px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              →
+            <button type="submit" disabled={loading} style={{ backgroundColor: '#4C7A78', color: 'white', border: 'none', padding: '15px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {loading ? '...' : '→'}
             </button>
-          </div>
+          </form>
         </div>
       </main>
 
