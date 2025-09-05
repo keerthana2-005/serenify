@@ -45,7 +45,7 @@ function OtpVerificationPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8080/api/verify-otp', {
+      const res = await fetch('http://localhost:8081/api/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: otp.join('') }),
@@ -76,7 +76,7 @@ function OtpVerificationPage() {
     setIsError(false);
 
     try {
-      const res = await fetch('http://localhost:8080/api/resend-otp', {
+      const res = await fetch('http://localhost:8081/api/resend-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
